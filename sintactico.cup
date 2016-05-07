@@ -1,0 +1,305 @@
+package Tiny;
+
+import java_cup.runtime.*;
+import ast.*;
+//import otros.*;
+
+parser code {:
+
+/***********
+SymbolFactory es una nueva caracteristica que ha sido añadida a las version 11a de cup, la cual facilita la implementacion de clases Symbol personalizadas
+, esto debido a que dicha clase no provee mucha información de contexto que podria ser util para el analisis semantico o ayudar en la construccion del AST
+Mas informacion en: http//4thmouse.com/index.php/2007/02/15/using-custom-symbols-in-cup/
+***********/
+	public static void main(String args[]) throws Exception {
+		SymbolFactory sf = new DefaultSymbolFactory();
+		parser parser_obj;
+		if (args.length==0) 
+			parser_obj=new parser(new Scanner(System.in,sf),sf);
+		else 
+			parser_obj=new parser(new Scanner(new java.io.FileInputStream(args[0]),sf),sf);
+
+		parser_obj.parse();
+		NodoBase root=parser_obj.action_obj.getASTroot();
+		System.out.println();
+		System.out.println("IMPRESION DEL AST GENERADO");
+		System.out.println();
+		ast.Util.imprimirAST(root);
+		TablaSimbolos ts = new TablaSimbolos();
+		//ts.cargarTabla(root);
+		//ts.ImprimirClaves();
+		//Tiny.Generador.setTablaSimbolos(ts);
+		//Tiny.Generador.generarCodigoObjeto(root);
+	}
+
+:}
+
+action code {:
+	private boolean debug=true;
+	private NodoBase ast=null;
+	private int lineanum=0;
+	
+	//Debe ser llamada solo despues de un parse(), en caso contrario retornara null siempre;
+	public NodoBase getASTroot(){
+		return ast;
+	}
+	
+:}
+
+/* Simbolos Terminales */
+
+terminal IF;
+terminal THEN;
+terminal ELSE;
+terminal END;
+terminal REPEAT;
+terminal WHILE;
+terminal INTEGER;
+terminal BOOLEAN;
+terminal DO;
+terminal DT;
+terminal TO;
+terminal UNTIL;
+terminal RETURN;
+terminal READ;
+terminal WRITE;
+terminal String ID;
+terminal Integer NUM;
+terminal boolean FALSE;
+terminal boolean TRUE;
+terminal PROGRAM;
+terminal FUNCTION;
+terminal PUNTOS;
+terminal AND;
+terminal FOR;
+terminal OR;
+terminal BEGIN;
+terminal VAR;
+terminal ASSIGN;
+terminal EQ;
+terminal LT;
+terminal GT;
+terminal LE;
+terminal GE;
+terminal NE;
+terminal PLUS;
+terminal MINUS;
+terminal TIMES;
+terminal OVER;
+terminal LPAREN;
+terminal RPAREN;
+terminal BRALEFT;
+terminal BRARIGHT;
+terminal COMMA;
+terminal SEMI;
+terminal ARRAY;
+terminal PU;
+terminal PUN;
+terminal OF;
+
+/* Simbolos No Terminales */
+non terminal program;
+non terminal NodoBase stmt_seq;
+non terminal NodoBase stmt;
+non terminal NodoBase if_stmt;
+non terminal NodoBase repeat_stmt;
+non terminal NodoBase while_stmt;
+non terminal NodoBase assign_stmt;
+non terminal NodoBase read_stmt;
+non terminal NodoBase write_stmt;
+non terminal NodoBase exp;
+non terminal NodoBase simple_exp;
+non terminal NodoBase term;
+non terminal NodoBase factor;
+
+non terminal NodoBase exp_and;
+non terminal NodoBase exp_logica;
+non terminal NodoBase for_stmt;
+non terminal NodoBase function_stmt;
+non terminal NodoBase type;
+non terminal NodoBase decl_var;
+non terminal NodoBase decl;
+non terminal NodoBase decl_vec;
+non terminal NodoBase vec;
+non terminal NodoBase function;
+non terminal NodoBase arg_list;
+non terminal NodoBase call_fun;
+non terminal NodoBase list;
+non terminal NodoBase struct_stmt;
+non terminal NodoBase inic;
+
+/* Precedencia de operadores */
+precedence left PLUS;
+precedence left MINUS;
+precedence left TIMES;
+precedence left OR;
+precedence left AND;
+
+
+/* REGLAS GRAMATICALES */
+program     ::= struct_stmt:s {:
+					ast = s;
+					:}
+		;
+struct_stmt ::= inic:p VAR decl_var:lista PUNTOS type:tipo SEMI decl_vec:dv function_stmt:fun BEGIN stmt_seq:s END PU{: :}
+			|  inic:p function_stmt:fun BEGIN stmt_seq:s END PU{: :}
+			;
+inic::= PROGRAM ID:variable SEMI{: :}
+		| 
+			;
+decl_var ::= decl_var:lista COMMA decl:varia {: :} 
+	    | decl:vari {: :} 
+            | 
+	;
+function_stmt ::= function_stmt:funs function:fun{: :}  
+				| function:fun {: :} 
+				
+				;
+function::= FUNCTION type:tipo ID:var LPAREN arg_list:args PUNTOS type:ti RPAREN BEGIN stmt_seq:st END SEMI {: :}
+			| FUNCTION type:tipo ID:var LPAREN  RPAREN BEGIN stmt_seq:st END SEMI {: :}
+			;
+
+stmt_seq    ::= stmt_seq:ini SEMI stmt:sent	{: 
+						:}
+            | stmt:sent	{:				
+				:}
+		;
+
+stmt        ::= if_stmt:sif	{: 
+					:}
+            | repeat_stmt:srep	{: 
+						:}
+		    | while_stmt:wrep	{:
+						:}
+			| for_stmt:fs	{: 
+						:}
+            | assign_stmt:sasi	{: 
+						:}
+            | read_stmt:slec	{: 
+					:}
+            | write_stmt:sesc	{: 
+					:}
+			| call_fun:cf	{: 
+					:}
+			| RETURN exp:ex SEMI{:		
+            	:}
+            | RETURN {:		:}
+            | error	{: 
+				:}
+            ;
+
+if_stmt     ::= IF exp:ex THEN stmt_seq:pthen END SEMI	{: 
+		:}
+		| IF exp:ex THEN stmt_seq:pthen ELSE stmt_seq:pelse END SEMI	{:		
+		:}
+		;
+
+repeat_stmt ::= REPEAT stmt_seq:cuerpo UNTIL exp:prueba	{: 
+							:}
+		;
+		
+while_stmt ::= WHILE exp:prueba DO stmt_seq:cuerpo END SEMI{: 
+							:}
+		;		
+	
+for_stmt::=	FOR assign_stmt:ast TO NUM:n DO BEGIN stmt_seq:ss END SEMI {: :}
+			| FOR assign_stmt:ast DT NUM:n DO BEGIN stmt_seq:ss END SEMI {: :}
+		;
+call_fun::=	ID:var LPAREN list:li RPAREN SEMI {: :}
+		;
+list ::=  list:lis COMMA exp:ex 	{: :}	
+		| exp:ex {: :}
+		| 		
+;
+assign_stmt ::= ID:variable 	{: 
+				:}
+			ASSIGN exp:ex SEMI{: 
+					:}
+		| ID:var BRALEFT exp:i BRARIGHT ASSIGN exp:ee SEMI {: :}		
+		;
+
+read_stmt   ::= READ ID:variable SEMI{: 
+					:}
+		;
+
+write_stmt  ::= WRITE exp:ex SEMI	{: 
+					:}
+		;
+
+exp         ::= exp:exI OR exp_and:exD {: 
+								:} 
+		| exp_and:ex {: 
+								:} 
+	    ;
+exp_and ::= exp_and:exI AND exp_logica:exD {: 
+                                                               :}
+               | exp_logica:ex {: 
+                                                               :}
+           ;
+exp_logica       ::= simple_exp:exI LT simple_exp:exD	{: 
+								:} 
+		| simple_exp:exI GT simple_exp:exD	{: 
+							:}
+		| simple_exp:exI EQ simple_exp:exD	{: 
+							:}
+		| simple_exp:exI NE simple_exp:exD	{: 
+							:}
+		| simple_exp:exI GE simple_exp:exD	{: 
+							:}	
+		| simple_exp:exI LE simple_exp:exD	{: 
+							:}						
+		| simple_exp:ex	{:
+					:}
+		;	    
+
+simple_exp  ::= simple_exp:exI PLUS term:exD	{:
+							:}
+		| simple_exp:exI MINUS term:exD	{: 
+							:}
+		| term:ex	{:
+				:}
+		;
+
+
+term        ::= term:exI TIMES factor:exD	{: 
+							:}
+		| term:exI OVER factor:exD	{: 
+						:}
+		| factor:ex	{: 
+					:}
+		;
+
+factor      ::= LPAREN exp:ex RPAREN	{: 
+							:}
+		| NUM:valor	{: 
+					:}
+		| ID:variable	{:
+					:}
+		| ID:variable BRALEFT exp:ex BRARIGHT  	{:
+		:}
+		| TRUE:v   	{:
+		:}
+		| FALSE:f  	{:
+		:}
+		| error	{: 
+				:}
+		;
+
+
+decl ::= ID:variable {: :}
+;
+decl_vec ::= decl_vec:dv SEMI vec:v {: :}
+            |vec:v {: :}
+            |
+            ;	
+vec ::=ID:var PUNTOS ARRAY BRALEFT NUM:ni PUN NUM:nd BRARIGHT OF type:ti SEMI{: :}
+            ;
+type ::= INTEGER {: :} 
+	| BOOLEAN {: :} 
+	;
+
+arg_list ::= arg_list:lista COMMA decl:ar {: :}
+			| decl:ar  {: :}
+			| 
+	;
+			

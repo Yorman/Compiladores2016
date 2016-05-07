@@ -1,0 +1,19 @@
+{esto es un comentario}
+program yy;
+var
+g,y:integer;
+vector:array[1..20] of integer;
+function integer hola (maria,j:boolean)
+begin
+ read ho;
+ for i:=0 to 5 do
+   begin
+	write hol;
+   end;
+return t;
+end;
+begin
+write 5;
+gg := hola(false,true);
+vector[i*2+1] := true;
+end.
