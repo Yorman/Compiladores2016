@@ -1,58 +1,50 @@
+
 package ast;
 
-public class NodoFor extends NodoBase 
-{
-	private NodoBase asignacion;
-	private NodoBase prueba;
-	private NodoBase paso;
-	private NodoBase cuerpo;
-	
-	public NodoFor(NodoBase cuerpo, NodoBase prueba, NodoBase asignacion, NodoBase paso) {
+/**
+ *
+ * @author katherine
+ */
+public class NodoFor extends NodoBase{
+    private NodoBase asignacion;
+    private Integer paso;
+    private NodoBase cuerpo;
+
+    public NodoFor(NodoBase asignacion, Integer paso, NodoBase cuerpo) {
+        this.asignacion = asignacion;
+        this.paso = paso;
+        this.cuerpo = cuerpo;
+    }
+
+    public NodoFor() {
 		super();
-		this.cuerpo = cuerpo;
-		this.prueba = prueba;
-		this.paso = paso;
-		this.asignacion = asignacion;
-	}
-	
-	public NodoFor() {
-		super();
-		this.cuerpo = null;
-		this.prueba = null;	
+		this.cuerpo = null;	
 		this.paso = null;
 		this.asignacion = null;
 	}
+    public NodoBase getAsignacion() {
+        return asignacion;
+    }
 
-	public NodoBase getCuerpo() {
-		return cuerpo;
-	}
+    public void setAsignacion(NodoBase asignacion) {
+        this.asignacion = asignacion;
+    }
 
-	public void setCuerpo(NodoBase cuerpo) {
-		this.cuerpo = cuerpo;
-	}
+    public Integer getPaso() {
+        return paso;
+    }
 
-	public NodoBase getPrueba() {
-		return prueba;
-	}
+    public void setPaso(Integer paso) {
+        this.paso = paso;
+    }
 
-	public void setPrueba(NodoBase prueba) {
-		this.prueba = prueba;
-	}
-	
-	public NodoBase getPaso() {
-		return paso;
-	}
+    public NodoBase getCuerpo() {
+        return cuerpo;
+    }
 
-	public void setPaso(NodoBase paso) {
-		this.paso = paso;
-	}
-	
-	public NodoBase getAsignacion() {
-		return asignacion;
-	}
-
-	public void setAsignacion(NodoBase asignacion) {
-		this.asignacion = asignacion;
-	}
-	
+    public void setCuerpo(NodoBase cuerpo) {
+        this.cuerpo = cuerpo;
+    }
+    
+    
 }

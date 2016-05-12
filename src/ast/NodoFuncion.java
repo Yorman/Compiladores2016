@@ -1,5 +1,14 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package ast;
 
+/**
+ *
+ * @author Yorman
+ */
 public class NodoFuncion extends NodoBase {
 	private String tipo;
 	private NodoBase args;
@@ -16,6 +25,14 @@ public class NodoFuncion extends NodoBase {
 		this.tipo=null;
 		this.num_arg=0;
 	}
+
+    public NodoBase getSiguiente() {
+        return siguiente;
+    }
+
+    public void setSiguiente(NodoBase siguiente) {
+        this.siguiente = siguiente;
+    }
 	
 	public NodoFuncion (String tipo,String nombre,NodoBase args, NodoBase sent){
 		super();
@@ -55,7 +72,8 @@ public class NodoFuncion extends NodoBase {
 		this.siguiente=null;
 		this.num_arg=0;
 	}
-	
+
+    
 	public NodoBase getArgs(){
 		return args;
 	}
