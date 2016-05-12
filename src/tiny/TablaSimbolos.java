@@ -1,8 +1,7 @@
-package compilador;
+package Tiny;
+
 
 import java.util.*;
-
-
 import ast.*;
 
 public class TablaSimbolos {
@@ -13,13 +12,13 @@ public class TablaSimbolos {
 	private HashMap<String, RegistroSimbolo> tablaAmbito;
 	private int direccion;  //Contador de las localidades de memoria asignadas a la tabla
 	private String ultimoTipo;
-	private String ultimoAmbito;
-	public boolean error = false;
-	
+        private String ultimoAmbito;
+	public boolean error = false;  //Contador de las localidades de memoria asignadas a la tabla
+		
 	// Auxiliares
 	public ArrayList<String> arrayArgumentos;
 	private HashMap <String,ArrayList<String>> tablaConArgumentos;
-	
+        
 	public TablaSimbolos() {
 		super();
 		tabla = new HashMap<String, HashMap<String, RegistroSimbolo>>();
@@ -29,7 +28,7 @@ public class TablaSimbolos {
 		tablaPrimerParametro = new HashMap <String, Integer>();				
 		direccion=0;
 	}
-	
+
 	public void cargarTabla(NodoBase raiz){
 		while (raiz != null) {
 	    /* Hago el recorrido recursivo */
@@ -44,7 +43,11 @@ public class TablaSimbolos {
 	    	cargarTabla(((NodoRepeat)raiz).getCuerpo());
 	    	cargarTabla(((NodoRepeat)raiz).getPrueba());
 	    }
-	    else if (raiz instanceof  NodoAsignacion){
+            else if (raiz instanceof NodoReturn){
+                cargarTabla(((NodoReturn)raiz).getExpresion());
+            }
+	    else if (raiz instanceof  NodoAsignacion)
+	    {
 	    	cargarTabla(((NodoAsignacion)raiz).getExpresion());
 	    }
 	    else if (raiz instanceof  NodoEscribir)
@@ -53,64 +56,69 @@ public class TablaSimbolos {
 	    	cargarTabla(((NodoOperacion)raiz).getOpIzquierdo());
 	    	cargarTabla(((NodoOperacion)raiz).getOpDerecho());
 	    }
-	    else if (raiz instanceof NodoDeclaracion) {
-	    	// Inserto el primer identificador y busco guardo el tipo de la declaracion que estoy recorriendo
-	    	ultimoTipo = ((NodoDeclaracion)raiz).getTipo();  
-	    	NodoBase nodo	=  ((NodoDeclaracion) raiz).getVariable(); 
-	    	
-	    	cargarIdentificadores((NodoIdentificador)nodo);
-	    	
-	    } 	    
-	    else if (raiz instanceof NodoFuncion) {
-	    	
-	    	String nombreFuncion = ((NodoFuncion)raiz).getNombre();
-	    	if (buscarAmbito(nombreFuncion)){
-		    	ultimoAmbito = ((NodoFuncion)raiz).getNombre();	// Cambio el ambito cuando entro a una funcion
-		    	if(ultimoAmbito != "MAIN")
-		    		tablaTipo.put(ultimoAmbito, ((NodoFuncion)raiz).getTipo());
-		    			    	
-		    	if( ((NodoFuncion)raiz).getArgs() != null){
-		    		cargarTabla(((NodoFuncion)raiz).getArgs());
-		    		arrayArgumentos = new ArrayList<String>();
-		    		cargarAgumentos(((NodoFuncion)raiz).getArgs());
-		    		tablaConArgumentos.put(ultimoAmbito, arrayArgumentos);
-		    	}
-		    	cargarTabla(((NodoFuncion)raiz).getSent());
-	    	} else 
-	    		printError("La funcion "+nombreFuncion+ " ya ha sido declarada");
+	    else if (raiz instanceof  NodoWhile)
+	    {
+	    	cargarTabla(((NodoWhile)raiz).getPrueba());
+	    	cargarTabla(((NodoWhile)raiz).getCuerpo());
+	    }
+	    else if (raiz instanceof  NodoDoWhile)
+	    {
+	    	cargarTabla(((NodoDoWhile)raiz).getCuerpo());
+	    	cargarTabla(((NodoDoWhile)raiz).getPrueba());
+	    }
+            else if (raiz instanceof  NodoFor)
+	    {
+	    	cargarTabla(((NodoFor)raiz).getCuerpo());
+	    }
+            else if (raiz instanceof NodoDeclaracion){
+                ultimoTipo = ((NodoDeclaracion)raiz).getTipo();
+                NodoBase nodo = ((NodoDeclaracion)raiz).getVariable();
+                
+               cargarIdentificadores((NodoIdentificador)nodo);
+            }
+            else if (raiz instanceof NodoFuncion){
+                String nombre = ((NodoFuncion)raiz).getNombre();
+                if (buscarAmbito(nombre)){
+                    ultimoAmbito = ((NodoFuncion)raiz).getNombre();
+                    if(ultimoAmbito!="principal")
+                        tablaTipo.put(ultimoAmbito,((NodoFuncion)raiz).getTipo());
+                
+                    if(((NodoFuncion)raiz).getArgs()!=null){
+                        cargarTabla(((NodoFuncion)raiz).getArgs());
+		    	arrayArgumentos = new ArrayList<String>();
+                        NodoBase nodo = ((NodoFuncion)raiz).getArgs();
+		    	cargarAgumentos(nodo);
+		    	tablaConArgumentos.put(ultimoAmbito, arrayArgumentos);
+                    }
+                cargarTabla(((NodoFuncion)raiz).getSent());
+                
+                } else 
+	    		printError("La funcion "+nombre+ " ya ha sido declarada");
 
-	    } 
-	    else if (raiz instanceof NodoProgram) {
-	    	if(((NodoProgram)raiz).getFunctions()!=null){
-	    		cargarTabla(((NodoProgram)raiz).getFunctions());
+            }
+            else if (raiz instanceof NodoPrograma) {
+	    	if(((NodoPrograma)raiz).getFunciones()!=null){
+	    		cargarTabla(((NodoPrograma)raiz).getFunciones());
 	    	}	
-	    	ultimoAmbito = "main";
-	    	cargarTabla(((NodoProgram)raiz).getMain());
-	    } 	    	
+	    	ultimoAmbito = "principal";
+	    	cargarTabla(((NodoPrograma)raiz).getPrincipal());
+	    }
+
 	    raiz = raiz.getHermanoDerecha();
-		
 	  }
 	}
 	
-	public void cargarIdentificadores(NodoIdentificador identificador){
+        public void cargarIdentificadores(NodoBase identificador){
     	Integer tamano 	= 1;
     	// Si es un vector
     	if(((NodoIdentificador)identificador).getTamano() != null)
     		tamano = ((NodoIdentificador)identificador).getTamano();
     	
-    	if(!InsertarSimbolo(identificador.getNombre(),ultimoAmbito, ultimoTipo,tamano))
-    		printError("Variable " +identificador.getNombre()+" ya ha sido declarada en el ambito " + ultimoAmbito);
-    	if(identificador.getSiguiente() != null) // Compruebo que el identificador tenga hermanos 
-    		cargarIdentificadores((NodoIdentificador)identificador.getSiguiente());	  	
+    	if(!InsertarSimbolo(((NodoIdentificador)identificador).getNombre(),ultimoAmbito, ultimoTipo,tamano))
+    		printError("Variable " +((NodoIdentificador)identificador).getNombre()+" ya ha sido declarada en el ambito " + ultimoAmbito);
+    	if(((NodoIdentificador)identificador).getSiguiente() != null) // Compruebo que el identificador tenga hermanos 
+    		cargarIdentificadores(((NodoIdentificador)identificador).getSiguiente());	  	
 	}
-	
-	private void cargarAgumentos(NodoBase nodo){
-    	String tipoArgumento = ((NodoDeclaracion)nodo).getTipo();
-    	arrayArgumentos.add(tipoArgumento);
-		if (((NodoDeclaracion)nodo).getHermanoDerecha() != null)
-			cargarAgumentos(((NodoDeclaracion)nodo).getHermanoDerecha());
-	}
-	
 	//true es nuevo no existe se insertara, false ya existe NO se vuelve a insertar 
 	public boolean InsertarSimbolo(String identificador, String ambito, String tipo,Integer tamano){
 		boolean array = false;
@@ -142,6 +150,18 @@ public class TablaSimbolos {
 			return true;
 		}
 	}
+        
+        private void cargarAgumentos(NodoBase nodo){
+    	String tipoArgumento = ((NodoDeclaracion)nodo).getTipo();
+    	arrayArgumentos.add(tipoArgumento);
+		if (((NodoDeclaracion)nodo).getHermanoDerecha() != null)
+			cargarAgumentos(((NodoDeclaracion)nodo).getHermanoDerecha());
+	}
+        
+        
+	public boolean buscarAmbito(String ambito){	
+		return !tablaTipo.containsKey(ambito);
+	}
 	
 	public RegistroSimbolo BuscarSimbolo(String identificador, HashMap<String, RegistroSimbolo> tablaAmbito ){
 		RegistroSimbolo simbolo=(RegistroSimbolo)tablaAmbito.get(identificador);
@@ -166,8 +186,8 @@ public class TablaSimbolos {
 	    RegistroSimbolo simbolo = tablaAmbito.get(Clave);
 	    return simbolo.getDireccionMemoria();
 	}
-	
- 	public String getTipo(String ambito, String identificador){
+        
+        public String getTipo(String ambito, String identificador){
 		this.tablaAmbito = tabla.get(ambito);
 		RegistroSimbolo simbolo=(RegistroSimbolo)tablaAmbito.get(identificador);
 		return simbolo.getTipo();
@@ -177,9 +197,9 @@ public class TablaSimbolos {
 		this.tablaAmbito = tabla.get(ambito);
 		RegistroSimbolo simbolo=(RegistroSimbolo)tablaAmbito.get(identificador);
 		return simbolo.getArray();
-	}	
-	
-	public boolean buscarTabla(String ambito, String identificador){
+	}
+        
+        public boolean buscarTabla(String ambito, String identificador){
 		if(tabla.containsKey(ambito)){
 			tablaAmbito = tabla.get(ambito);
 			if(tablaAmbito.containsKey(identificador)){
@@ -191,17 +211,17 @@ public class TablaSimbolos {
 			return false;
 		}		
 	}
-	
-	public String getTipoFuncion(String funcion){		
+        private void printError(Object chain){		
+		System.err.println("[Error Semantico]: "+chain);
+		error = true;
+	}
+        
+        	public String getTipoFuncion(String funcion){		
 		return tablaTipo.get(funcion);
 	}
 	
 	public ArrayList<String> getArrayArguments(String ambito){
 		return tablaConArgumentos.get(ambito);
-	}
-	
-	public boolean buscarAmbito(String ambito){	
-		return !tablaTipo.containsKey(ambito);
 	}
 		
 	public void setUltimoAmbito(String Ambito)
@@ -216,8 +236,8 @@ public class TablaSimbolos {
 	public Integer getiMem(String ambito){
 		return tablaiMem.get(ambito);
 	}
-	
-	public Integer getPrimerArgumento(String ambito){
+        
+        	public Integer getPrimerArgumento(String ambito){
 		Integer x = 1;
 		x = tablaPrimerParametro.get(ambito);
 		return x;
@@ -237,19 +257,6 @@ public class TablaSimbolos {
 	    simbolo.setInicializado(inicializado);
 	    tablaAmbito.put(identificador, simbolo);
 	    tabla.put(ambito, tablaAmbito);
-	}	
-	
-	private void printError(Object chain){		
-		System.err.println("[Error Semantico]: "+chain);
-		error = true;
-	}		
-	
-	public boolean getError(){
-		return error;
 	}
-	/*
-	 * TODO:
-	 * 1. Crear lista con las lineas de codigo donde la variable es usada.
-	 * */
+	
 }
-

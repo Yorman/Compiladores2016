@@ -1,7 +1,8 @@
-package compilador;
+package Tiny;
+
 
 public class RegistroSimbolo {
-	private String identificador;
+private String identificador;
 	private int NumLinea;
 	private int DireccionMemoria;
 	private String tipo; 							// Para el tipo de dato del identificador 1=int 2=boolean
