@@ -1,9 +1,47 @@
 {esto es un comentario}
 program yy;
 var
-g,y:integer;
-vector:array[1..20] of integer;
+g,y,c,a,e:integer;
+x,q,f,b:boolean;
+vec array[1..10] of integer;
+vecr array[1..25] of boolean;
+vetor array[1..28] of integer;
+x,q,f,b:boolean;
+procedure hola (maria,j:boolean)
+begin
+ write ho;
+ if 5>7 then
+   read marta;
+ end;
+end;
 function integer hola (maria,j:boolean)
+begin
+ read ho;
+ for i:=0 to 5 do
+   begin
+	write hol;
+   end;
+return t;
+end;
+function integer hola ()
+begin
+ read ho;
+ for i:=0 to 5 do
+   begin
+	write hol;
+   end;
+return t;
+end;
+function boolean hola (maria,j:boolean)
+begin
+ read ho;
+ for i:=0 to 5 do
+   begin
+	write hol;
+   end;
+return t;
+end;
+function integer hola ()
 begin
  read ho;
  for i:=0 to 5 do
